@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${book.title}">상세 보기</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .content-container {
+            max-width: 700px; /* 가로 폭 절반 정도로 쫀득하게 줄임! */
+            margin: 0 auto;
+            padding: 40px;
+        }
+        .content-img {
+            width: 100%;
+            height: auto;
+            margin: 30px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .content-text {
+            font-size: 1.15rem;
+            line-height: 2.1;
+            white-space: pre-wrap;
+            color: #333;
+            word-break: break-all;
+        }
+        .meta-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="content-container bg-white shadow-sm mt-5 mb-5">
+    <h1 class="text-center fw-bold mb-3" th:text="${book.title}">책 제목</h1>
+
+    <div class="meta-info text-center">
+        작성일: <span th:text="${#temporals.format(book.createdAt, 'yyyy-MM-dd HH:mm')}"></span> |
+        조회수: <span th:text="${book.viewCount}" class="fw-bold text-primary">0</span>
+    </div>
+
+    <div class="text-start">
+        <img th:src="${book.mainImageUrl}" class="content-img" alt="main-img">
+
+        <div class="content-text mb-5" th:text="${book.content}">본문 내용이지 이말이야</div>
+
+        <div th:each="imgUrl : ${book.subImageUrls}">
+            <img th:src="${imgUrl}" class="content-img">
+        </div>
+    </div>
+
+    <div class="mt-5 text-center border-top pt-4">
+        <a href="/" class="btn btn-outline-secondary me-2">목록으로</a>
+        <a th:href="@{/edit/{id}(id=${book.id})}" class="btn btn-warning px-4">수정하기</a>
+    </div>
+</div>
+</body>
+</html>
