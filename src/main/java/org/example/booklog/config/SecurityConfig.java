@@ -22,14 +22,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // 테스트 편의를 위해 일단 끈다 이말이야!
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/signup", "/verify", "/login", "/css/**", "/js/**", "/uploads/**").permitAll() // 누구나 접근 가능!
-                        .anyRequest().authenticated() // 나머지는 로그인해야 드@갈 수 있다 유남생?!?
+                        // 💥 핵심: /** 를 붙여서 모든 하위 경로와 파라미터(?error 등)를 싹다 열어라!
+                        .requestMatchers("/", "/login/**", "/signup/**", "/verify/**", "/css/**", "/js/**", "/uploads/**").permitAll()
+                        // 🔒 특정 기능만 로그인 체크하겠다 이말이야!
+                        .requestMatchers("/write/**", "/edit/**", "/delete/**", "/view/**").authenticated()
+                        .anyRequest().permitAll() // 👈 나머지도 일단 다 열어줘서 튕기는 걸 원천 차단해라!
                 )
                 .formLogin(login -> login
-                        .loginPage("/login") // 로그인 페이지 경로지 이말이여
-                        .defaultSuccessUrl("/") // 성공하면 홈으로 궈궈!
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
