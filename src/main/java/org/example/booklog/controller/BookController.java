@@ -35,18 +35,16 @@ public class BookController {
 
     @GetMapping("/")
     public String home(@RequestParam(defaultValue = "latest") String sort, Model model, Principal principal) {
-        // 💥 이제 리디렉션 따위는 없다 이말이야!
-        List<BookRecord> books;
+        List<BookRecord> books = new ArrayList<>(); // 기본은 빈 리스트!
 
-        if (principal == null) {
-            // 로그인 안 했으면 그냥 전체 공개된 글이나 빈 목록 보여줘라 이말이지 ㅇㅇ
-            books = repository.findAll(); // 혹은 빈 리스트 new ArrayList<>()
-        } else {
+        if (principal != null) {
+            // 로그인 한 브로만 자기 책 가져오기!
             Member member = memberRepository.findByUsername(principal.getName()).orElseThrow();
             if (sort.equals("oldest")) books = repository.findAllByMemberOrderByCreatedAtAsc(member);
             else if (sort.equals("views")) books = repository.findAllByMemberOrderByViewCountDesc(member);
             else books = repository.findAllByMemberOrderByCreatedAtDesc(member);
         }
+        // 로그인 안 했으면 books는 빈 상태로 나가는 거지 이말이야!
 
         model.addAttribute("books", books);
         return "home";

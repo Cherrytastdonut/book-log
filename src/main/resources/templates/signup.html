@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입 - 나만의 독서기록소</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .signup-container { max-width: 450px; width: 95%; }
+        .pw-msg { font-size: 0.8rem; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+
+<div class="container signup-container bg-white p-5 shadow-lg rounded-4">
+    <h3 class="text-center mb-4 fw-bold text-primary">📚 독서기록소 합류하라!</h3>
+    <p class="text-center text-muted small mb-4">가입@ 전까지는 못 나간다 이말이지 ㅇㅇ</p>
+
+    <form th:action="@{/signup}" method="post" onsubmit="return validateForm()">
+        <div class="mb-3">
+            <label class="form-label fw-bold">아이디</label>
+            <div class="input-group">
+                <input type="text" name="username" id="username" class="form-control" placeholder="아이디 입력!" required oninput="resetIdCheck()">
+                <button type="button" class="btn btn-outline-primary" onclick="checkDuplicateId()">중복 확인</button>
+            </div>
+            <div id="id-check-msg" class="pw-msg text-muted">※ 중복 확인@은 필수다 유남생?!?</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">이메일</label>
+            <input type="email" name="email" id="email" class="form-control" placeholder="이메일을 입력하세요" required>
+            </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">비밀번호</label>
+            <input type="password" id="password" name="password" class="form-control"
+                   placeholder="비밀번호를 입력하세요!" autocomplete="new-password" required
+                   oninput="checkPasswordMatch()">
+            <div id="pw-hint" class="pw-msg text-muted">※ 영문, 숫자, 특수문자 조합 8자 이상!</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">비밀번호 확인</label>
+            <input type="password" id="passwordConfirm" class="form-control"
+                   placeholder="비밀번호를 입력하세요!" autocomplete="new-password" required
+                   oninput="checkPasswordMatch()">
+            <div id="pw-match-msg" class="pw-msg text-muted">※ 비밀번호를 한번더 입력하세요</div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn-primary w-100 fw-bold py-3 mt-3 shadow" disabled>
+            가입하고 인증메일 받기!
+        </button>
+    </form>
+</div>
+
+<script th:inline="javascript">
+    let isIdChecked = false;
+
+    // 페이지 로드 시 초기화
+    window.onload = function() {
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => { if(input.type !== 'submit') input.value = ''; });
+    };
+
+    // 아이디 다시 치면 중복 확인 리셋!
+    function resetIdCheck() {
+        isIdChecked = false;
+        document.getElementById('id-check-msg').innerText = "아이디@가 바뀌었으니 다시 확인해라!";
+        document.getElementById('id-check-msg').className = "pw-msg text-warning";
+        checkPasswordMatch();
+    }
+
+    // 아이디 중복 체크 API 호출
+    async function checkDuplicateId() {
+        const username = document.getElementById('username').value;
+        const msg = document.getElementById('id-check-msg');
+        if(!username) { alert('아이디@부터 써라 브@로!'); return; }
+
+        const response = await fetch('/signup/check-id?username=' + username);
+        const isDuplicate = await response.json();
+
+        if (isDuplicate) {
+            msg.innerText = "이미 누가 쓰고 있다 이말이야 유남생?!?";
+            msg.className = "pw-msg text-danger";
+            isIdChecked = false;
+        } else {
+            msg.innerText = "쫀득@하게 사용 가능하다 이말이야!";
+            msg.className = "pw-msg text-success";
+            isIdChecked = true;
+        }
+        checkPasswordMatch();
+    }
+
+    // 비밀번호 매칭 + 모든 조건 충족 시 버튼 활성화
+    function checkPasswordMatch() {
+        const pw = document.getElementById('password').value;
+        const pwConfirm = document.getElementById('passwordConfirm').value;
+        const msg = document.getElementById('pw-match-msg');
+        const hint = document.getElementById('pw-hint');
+        const btn = document.getElementById('submitBtn');
+
+        // 💥 정규식은 여기서만 따진다!
+        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
+        // 1. 비밀번호 조건 체크 (첫 번째 칸 전용)
+        const isPwValid = pwRegex.test(pw);
+        if (!isPwValid) {
+            hint.className = "pw-msg text-danger";
+            hint.innerText = "조건@이 안 맞는다 브@로! 영문+숫자+기호 8자 채워라!";
+        } else {
+            hint.className = "pw-msg text-success";
+            hint.innerText = "비번 조건 쫀득@하게 통과!";
+        }
+
+        // 2. 비밀번호 일치 체크 (두 번째 칸 전용 - 브로가 원한 로직!)
+        const isMatch = (pw !== "" && pw === pwConfirm);
+
+        if (pwConfirm !== "") {
+            if (isMatch) {
+                msg.innerText = "비번@이 찰@지게 일치한다!";
+                msg.className = "pw-msg text-success";
+            } else {
+                msg.innerText = "위@랑 똑@같이 쳐라 이말이야 유남생?!?";
+                msg.className = "pw-msg text-danger";
+            }
+        } else {
+            msg.innerText = "";
+        }
+
+        // 3. 최종 버튼 활성화 (아이디 중복확인 + 비번 조건 + 비번 일치)
+        if (isPwValid && isMatch && isIdChecked) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    }
+
+    function validateForm() { return !document.getElementById('submitBtn').disabled; }
+
+    // 📧 이메일 중복 팝업 처리
+    /*[# th:if="${error == 'email_exists'}"]*/
+    const existingId = /*[[${existingId}]]*/ '아이디';
+    if (confirm("이 이메일로 가입된 계정(" + existingId + ")이 이미 있다 이말이야!\n로그인하러 갈거냐는 거지 ㅇㅇ?!?")) {
+        location.href = '/login';
+    }
+    /*[/]*/
+</script>
+</body>
+</html>
