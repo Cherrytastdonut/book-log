@@ -33,6 +33,7 @@ public class MemberController {
         return "login";
     }
 
+
     @GetMapping("/signup")
     public String signupForm() {
         return "signup";

@@ -37,6 +37,14 @@
 <div class="container main-content bg-white p-4 shadow-sm rounded">
     <div class="d-flex justify-content-between mb-4 align-items-center">
         <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle btn-sm fw-bold" type="button" data-bs-toggle="dropdown">
+                <span th:text="${currentSort == 'views' ? '조회수순' : (currentSort == 'oldest' ? '오래된순' : '최신순')}">정렬 기준</span>
+            </button>
+            <ul class="dropdown-menu shadow">
+                <li><a class="dropdown-item p-2 small" th:href="@{/(sort='latest')}">최신순 드가자!</a></li>
+                <li><a class="dropdown-item p-2 small" th:href="@{/(sort='oldest')}">오래된순 쫀득하게!</a></li>
+                <li><a class="dropdown-item p-2 small" th:href="@{/(sort='views')}">조회수순 찰지게!</a></li>
+            </ul>
         </div>
 
         <div sec:authorize="isAnonymous()">

@@ -1,4 +1,5 @@
 HELP.md
+*.properties text eol=lf
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

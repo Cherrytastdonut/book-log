@@ -47,6 +47,10 @@ public class BookController {
         // 로그인 안 했으면 books는 빈 상태로 나가는 거지 이말이야!
 
         model.addAttribute("books", books);
+
+        // 💥 핵심: 이걸 안 넘기면 HTML이 현재 상태를 모른다 이말이야!
+        model.addAttribute("currentSort", sort);
+
         return "home";
     }
 
