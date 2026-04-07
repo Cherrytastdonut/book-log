@@ -1,3 +1,4 @@
+p// BookController.java 
 package org.example.booklog.controller;
 
 import lombok.RequiredArgsConstructor;
@@ -11,19 +12,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import lombok.RequiredArgsConstructor;
-import org.example.booklog.domain.BookRecord;
-import org.example.booklog.domain.BookRecordRepository;
-import org.example.booklog.domain.Member;
-import org.example.booklog.domain.MemberRepository;
-import org.example.booklog.service.FileService;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.security.Principal;
-import java.util.ArrayList; // 빈 리스트용이지 이말이여
+import java.util.ArrayList;
 import java.util.List;
 @Controller
 @RequiredArgsConstructor
