@@ -43,4 +43,12 @@ public class BookRecord {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id") // DB 외래키 이름이지 이말이여
     private Member member;
+
+// BookRecord.java 내부 필드에 추가해라!
+
+    // 책 표지로 쓸 이미지는 mainImageUrl을 그대로 쓰면 되는 거군!!
+    // 그리고 이 책이 어느 폴더(책장)에 소속되어 있는지 연결해라!!
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    private Folder folder;
 }
