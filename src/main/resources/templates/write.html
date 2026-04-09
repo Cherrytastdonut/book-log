@@ -1,31 +1,264 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>독서 기록하기</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코노 디오의 쌈@뽕한 기록 작성소</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="container mt-5">
+    <style>
+        :root {
+            --book-crimson: #5d0e0e;
+            --page-antique: #f4eee0;
+            --jojo-gold: #c5a059;
+            --ink-black: #1a1a1b;
+        }
 
-<h2>새로운 독서 기록</h2>
-<hr>
-<form action="/write" method="post" enctype="multipart/form-data">
-    <div class="mb-3">
-        <label class="form-label">책 제목</label>
-        <input type="text" name="title" class="form-control" required>
+        body {
+            background: radial-gradient(circle at center, #3d332d 0%, #0a0908 100%); 
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto; 
+            perspective: 3000px; 
+            margin: 0;
+            font-family: 'Times New Roman', serif;
+            min-width: 320px; 
+        }
+
+        .book-container {
+            width: 90vw;
+            max-width: 1200px;
+            min-height: 550px; 
+            min-width: 300px;
+            aspect-ratio: 1.4 / 1; 
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+            transform: translateX(-25%) rotateY(-20deg) rotateX(5deg); 
+            filter: drop-shadow(0 30px 60px rgba(0,0,0,0.8));
+        }
+
+        .book-container.opened {
+            transform: translateX(0) rotateY(0deg) rotateX(0deg);
+        }
+
+        .page {
+            position: absolute;
+            background: var(--page-antique);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
+            padding: 2.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* 🧛 오른쪽 페이지 (사진 등록부) */
+        .page-right { 
+            left: 50%; 
+            width: 50%;
+            height: 100%;
+            top: 0;
+            border-radius: 0 15px 15px 0; 
+            z-index: 1; 
+            border: 1px solid #dcd3bc;
+            border-left: 2px solid #ccc; 
+        }
+
+        .cover-wrapper {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            left: 50%;
+            top: 0;
+            transform-origin: left;
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+            z-index: 5;
+        }
+
+        .book-container.opened .cover-wrapper { 
+            transform: rotateY(-180deg); 
+        }
+
+        .cover-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #7a1515, var(--book-crimson));
+            color: var(--jojo-gold);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0 15px 15px 0; 
+            backface-visibility: hidden;
+            border: 10px double var(--jojo-gold);
+            box-sizing: border-box;
+            z-index: 2;
+        }
+
+        /* 🧛 표지 뒷면 (왼쪽 페이지 - 텍스트 작성부) */
+        .cover-back {
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotateY(180deg); 
+            backface-visibility: hidden;
+            border-radius: 15px 0 0 15px !important; 
+            border-left: 1px solid #dcd3bc !important; 
+            border-right: 5px solid #222 !important; 
+            z-index: 1;
+        }
+
+        .record-scroll { overflow-y: auto; flex-grow: 1; max-height: 100%; padding-right: 10px; }
+        .record-scroll::-webkit-scrollbar { width: 6px; }
+        .record-scroll::-webkit-scrollbar-thumb { background: var(--jojo-gold); border-radius: 10px; }
+
+        /* 🧛 폼 전용 쌈@뽕한 스타일들! */
+        .jojo-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid var(--jojo-gold);
+            padding: 10px;
+            font-family: inherit;
+            color: var(--ink-black);
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        /* 🧛 제왕의 제목 전용 스타일이다아앗!!! */
+        .jojo-title-input {
+            font-size: 1.5rem !important; /* 일반 입력창보다 확실히 크게! */
+            font-weight: bold !important;
+            letter-spacing: 2px; /* 자간을 넓혀 고급스러움을 더한다! */
+            border-width: 2px !important; /* 테두리도 더 두껍게! */
+            color: var(--book-crimson) !important; /* 글자색도 중후한 레드 계열로! */
+            padding: 15px !important;
+            border-style: double !important; /* 이중 테두리로 관록을 더한다! */
+        }
+        .jojo-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 10px rgba(197, 160, 89, 0.4);
+        }
+
+        .jojo-btn {
+            background: var(--book-crimson);
+            color: var(--jojo-gold);
+            font-weight: bold;
+            border: 1px solid var(--jojo-gold);
+            padding: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            text-transform: uppercase;
+            transition: 0.4s;
+            cursor: pointer;
+        }
+        .jojo-btn:hover { background: #4a0a0a; color: #fff; box-shadow: 0 0 15px rgba(197, 160, 89, 0.4); }
+
+        h3 { font-size: clamp(1.2rem, 3vw, 1.8rem) !important; }
+        label { font-size: 0.9rem; margin-bottom: 5px; display: block; color: #443e33; font-weight: bold; }
+
+        /* 📱 모바일 환경 최적화 */
+        /* 📱 모바일에서는 조금 숨을 죽여주는 것이 '올바른 백'의 도리! */
+        @media (max-width: 668px) {
+            .jojo-title-input {
+                font-size: 1.2rem !important;
+                padding: 10px !important;
+            }
+
+            .book-container {
+                width: 90vw; height: 90vh; aspect-ratio: auto; 
+                transform: translateY(-25%) rotateX(15deg) !important; 
+            }
+            .book-container.opened { transform: translateY(0) rotateX(0deg) !important; }
+            .page { padding: 1rem 1.5rem !important; }
+            
+            .page-right { 
+                left: 0; top: 50%; width: 100%; height: 50%;
+                border-radius: 0 0 15px 15px !important; 
+                border-left: 1px solid #dcd3bc !important;
+                border-top: 2px solid #ccc !important; 
+            }
+            
+            .cover-wrapper { left: 0; top: 50%; width: 100%; height: 50%; transform-origin: top; }
+            .book-container.opened .cover-wrapper { transform: rotateX(180deg) !important; }
+            .cover-front { border-radius: 0 0 15px 15px !important; }
+            .cover-back {
+                transform: rotateX(180deg) !important; 
+                border-radius: 15px 15px 0 0 !important; 
+                border-bottom: 3px solid #222 !important; 
+                border-top: 1px solid #dcd3bc !important; 
+                border-left: none !important; border-right: none !important;
+            }
+            h3 { font-size: 1.1rem !important; margin-bottom: 10px !important; padding-bottom: 5px !important; }
+            .jojo-input { padding: 6px; font-size: 0.85rem; }
+            .jojo-btn { padding: 8px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<form action="/write" method="post" enctype="multipart/form-data" style="display: contents;">
+    <div class="book-container" id="jojoBook">
+        
+        <div class="page page-right">
+            <h3 class="fw-bold border-bottom pb-2 mb-3" style="color: #443e33; font-style: italic; border-color: var(--jojo-gold) !important;">IMAGE GALLERY</h3>
+            <div class="record-scroll">
+                
+                <div class="mb-4">
+                    <label>메인 사진 (목록용) <span class="text-danger">*</span></label>
+                    <input type="file" name="mainImg" class="jojo-input" style="font-size: 0.8rem;" accept="image/*" required>
+                </div>
+
+                <div class="mb-3">
+                    <label>인상 깊은 사진들 (여러 장 가능)</label>
+                    <input type="file" name="subImgs" class="jojo-input" style="font-size: 0.8rem;" accept="image/*" multiple>
+                </div>
+                
+                <div class="mt-4 p-3" style="background: rgba(197, 160, 89, 0.1); border-left: 3px solid var(--jojo-gold); font-size: 0.85rem; color: #555;">
+                    💡 인상깊은 사진들을 추가할 수 있습니다 <br>
+                    <strong style="color: var(--book-crimson);">메인 사진</strong>을 올리지 않으면 기록 저장이 불가합니다
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-wrapper">
+            <div class="cover-front">
+                <div style="border: 1px solid var(--jojo-gold); padding: 20px; text-align: center; width: 85%; height: 85%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <p style="letter-spacing: 4px; font-size: 0.7rem; opacity: 0.7; margin-bottom: 10px;">WRITE THE DESTINY</p>
+                    <h1 style="font-size: clamp(1.8rem, 5vw, 3rem); text-shadow: 2px 2px 4px rgba(0,0,0,0.5); font-weight: bold;">NEW RECORD</h1>
+                    <div style="height: 2px; background: var(--jojo-gold); width: 40px; margin: 15px auto;"></div>
+                </div>
+            </div>
+
+            <div class="page cover-back">
+                <h3 class="fw-bold border-bottom pb-2 mb-3" style="color: #443e33; font-style: italic; border-color: var(--jojo-gold) !important;">TEXT CHRONICLE</h3>
+                
+                <div class="mb-3">
+                    <label>책 제목 <span class="text-danger">*</span></label>
+                    <input type="text" name="title" class="jojo-input" required>
+                </div>
+
+                <div class="mb-3 d-flex flex-column flex-grow-1">
+                    <label>본문 내용</label>
+                    <textarea name="content" class="jojo-input flex-grow-1" style="resize: none;" rows="5"></textarea>
+                </div>
+
+                <div class="mt-auto pt-3 border-top d-flex gap-2" style="border-color: rgba(197, 160, 89, 0.5) !important;">
+                    <a href="/" class="jojo-btn" style="flex: 1; background: transparent; color: var(--ink-black);">취소</a>
+                    <button type="submit" class="jojo-btn" style="flex: 2;">기록 저장</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <label class="form-label">메인 사진 (목록용)</label>
-        <input type="file" name="mainImg" class="form-control" accept="image/*" required>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">본문 내용</label>
-        <textarea name="content" class="form-control" rows="5"></textarea>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">인상 깊은 사진들 (여러 장 가능)</label>
-        <input type="file" name="subImgs" class="form-control" accept="image/*" multiple>
-    </div>
-    <button type="submit" class="btn btn-success">기록 저장</button>
 </form>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 페이지 접속 시 찰@지게 열리는 마도서 애니메이션!
+    window.onload = () => { setTimeout(() => { document.getElementById('jojoBook').classList.add('opened'); }, 600); };
+</script>
 </body>
 </html>

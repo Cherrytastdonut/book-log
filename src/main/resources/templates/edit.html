@@ -1,102 +1,296 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>기록 수정하기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코노 디오의 쌈@뽕한 기록 수정소</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .edit-container { max-width: 700px; margin: 0 auto; padding: 40px; }
-        .edit-img-thumbnail { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 10px; }
-        .img-delete-box { display: inline-block; position: relative; margin-bottom: 15px; }
-
-        /* X 버튼 위치랑 정렬 쫀득하게 수정했다 이말이야! */
-        .btn-delete {
-            position: absolute; top: -5px; right: 5px;
-            background: rgba(255,0,0,0.8); color: white;
-            border: none; border-radius: 50%;
-            width: 22px; height: 22px;
-            font-size: 14px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center; /* 글자 중앙 정렬! */
-            cursor: pointer; padding-bottom: 2px;
+        :root {
+            --book-crimson: #5d0e0e;
+            --page-antique: #f4eee0;
+            --jojo-gold: #c5a059;
+            --ink-black: #1a1a1b;
         }
-        /* 체크박스 선택 시 시각적 효과 (선택사항) */
+
+        body {
+            background: radial-gradient(circle at center, #3d332d 0%, #0a0908 100%); 
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto; 
+            perspective: 3000px; 
+            margin: 0;
+            font-family: 'Times New Roman', serif;
+            min-width: 320px; 
+        }
+
+        .book-container {
+            width: 90vw;
+            max-width: 1200px;
+            min-height: 550px; 
+            min-width: 300px;
+            aspect-ratio: 1.4 / 1; 
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+            transform: translateX(-25%) rotateY(-20deg) rotateX(5deg); 
+            filter: drop-shadow(0 30px 60px rgba(0,0,0,0.8));
+        }
+
+        .book-container.opened {
+            transform: translateX(0) rotateY(0deg) rotateX(0deg);
+        }
+
+        .page {
+            position: absolute;
+            background: var(--page-antique);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
+            padding: 2.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* 🧛 오른쪽 페이지 (사진 수정부) */
+        .page-right { 
+            left: 50%; 
+            width: 50%;
+            height: 100%;
+            top: 0;
+            border-radius: 0 15px 15px 0; 
+            z-index: 1; 
+            border: 1px solid #dcd3bc;
+            border-left: 2px solid #ccc; 
+        }
+
+        .cover-wrapper {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            left: 50%;
+            top: 0;
+            transform-origin: left;
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+            z-index: 5;
+        }
+
+        .book-container.opened .cover-wrapper { 
+            transform: rotateY(-180deg); 
+        }
+
+        .cover-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #7a1515, var(--book-crimson));
+            color: var(--jojo-gold);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0 15px 15px 0; 
+            backface-visibility: hidden;
+            border: 10px double var(--jojo-gold);
+            box-sizing: border-box;
+            z-index: 2;
+        }
+
+        /* 🧛 표지 뒷면 (펼쳤을 때 왼쪽 페이지 - 텍스트 수정부) */
+        .cover-back {
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotateY(180deg); 
+            backface-visibility: hidden;
+            border-radius: 15px 0 0 15px !important; 
+            border-left: 1px solid #dcd3bc !important; 
+            border-right: 5px solid #222 !important; 
+            z-index: 1;
+        }
+
+        .record-scroll { overflow-y: auto; flex-grow: 1; max-height: 100%; padding-right: 10px; }
+        .record-scroll::-webkit-scrollbar { width: 6px; }
+        .record-scroll::-webkit-scrollbar-thumb { background: var(--jojo-gold); border-radius: 10px; }
+
+        /* 🧛 수정 폼 전용 쌈@뽕한 스타일들! */
+        .jojo-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid var(--jojo-gold);
+            padding: 10px;
+            font-family: inherit;
+            color: var(--ink-black);
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .jojo-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 10px rgba(197, 160, 89, 0.4);
+        }
+
+        .jojo-btn {
+            background: var(--book-crimson);
+            color: var(--jojo-gold);
+            font-weight: bold;
+            border: 1px solid var(--jojo-gold);
+            padding: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            text-transform: uppercase;
+            transition: 0.4s;
+            cursor: pointer;
+        }
+        .jojo-btn:hover { background: #4a0a0a; color: #fff; box-shadow: 0 0 15px rgba(197, 160, 89, 0.4); }
+        .jojo-btn-danger { background: #800000; border-color: #ff4d4d; color: #ff4d4d; }
+        .jojo-btn-danger:hover { background: #ff4d4d; color: #fff; }
+
+        .edit-img-thumbnail { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--jojo-gold); }
+        .img-delete-box { display: inline-block; position: relative; margin-right: 10px; margin-bottom: 10px; }
+        
+        .btn-delete {
+            position: absolute; top: -5px; right: -5px;
+            background: rgba(255,0,0,0.8); color: white;
+            border: 1px solid var(--jojo-gold); border-radius: 50%;
+            width: 22px; height: 22px;
+            font-size: 12px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; padding-bottom: 2px;
+            transition: 0.2s;
+            z-index: 10;
+        }
         input[type="checkbox"]:checked + .btn-delete {
-            background: #000;
-            border: 2px solid white;
+            background: #000; border: 2px solid white; transform: scale(1.1);
+        }
+        input[type="checkbox"]:checked ~ img {
+            filter: grayscale(100%) brightness(50%);
+        }
+
+        h3 { font-size: clamp(1.2rem, 3vw, 1.8rem) !important; }
+        label { font-size: 0.9rem; margin-bottom: 5px; display: block; color: #443e33; font-weight: bold; }
+
+        /* 📱 모바일 환경 최적화 */
+        @media (max-width: 668px) {
+            .book-container {
+                width: 90vw; height: 90vh; aspect-ratio: auto; 
+                transform: translateY(-25%) rotateX(15deg) !important; 
+            }
+            .book-container.opened { transform: translateY(0) rotateX(0deg) !important; }
+            .page { padding: 1rem 1.5rem !important; }
+            
+            .page-right { 
+                left: 0; top: 50%; width: 100%; height: 50%;
+                border-radius: 0 0 15px 15px !important; 
+                border-left: 1px solid #dcd3bc !important;
+                border-top: 2px solid #ccc !important; 
+            }
+            
+            .cover-wrapper { left: 0; top: 50%; width: 100%; height: 50%; transform-origin: top; }
+            .book-container.opened .cover-wrapper { transform: rotateX(180deg) !important; }
+            .cover-front { border-radius: 0 0 15px 15px !important; }
+            .cover-back {
+                transform: rotateX(180deg) !important; 
+                border-radius: 15px 15px 0 0 !important; 
+                border-bottom: 3px solid #222 !important; 
+                border-top: 1px solid #dcd3bc !important; 
+                border-left: none !important; border-right: none !important;
+            }
+            h3 { font-size: 1.1rem !important; margin-bottom: 10px !important; padding-bottom: 5px !important; }
+            .jojo-input { padding: 6px; font-size: 0.85rem; }
+            .jojo-btn { padding: 8px; font-size: 0.8rem; }
         }
     </style>
 </head>
-<body class="bg-light">
-<div th:replace="~{fragments/header :: header}"></div>
+<body>
 
-<div class="container">
-</div>
-<div class="edit-container bg-white shadow-sm mt-5 mb-5">
-    <h2 class="text-center fw-bold mb-4">독서 기록 수정</h2>
-    <hr>
+<form th:action="@{/edit/{id}(id=${book.id})}" method="post" enctype="multipart/form-data" id="editForm" style="display: contents;">
+    <div class="book-container" id="jojoBook">
+        
+        <div class="page page-right">
+            <h3 class="fw-bold border-bottom pb-2 mb-3" style="color: #443e33; font-style: italic; border-color: var(--jojo-gold) !important;">IMAGE GALLERY</h3>
+            <div class="record-scroll">
+                
+                <div class="mb-3 border-bottom pb-3" style="border-color: rgba(197, 160, 89, 0.3) !important;">
+                    <label>메인 사진 교체</label>
+                    <div class="mb-2">
+                        <img th:src="${book.mainImageUrl}" class="edit-img-thumbnail shadow-sm">
+                    </div>
+                    <input type="file" name="mainImg" class="jojo-input" style="font-size: 0.8rem;" accept="image/*">
+                </div>
 
-    <form th:action="@{/edit/{id}(id=${book.id})}" method="post" enctype="multipart/form-data" id="editForm">
-        <div class="mb-3">
-            <label class="form-label fw-bold">책 제목</label>
-            <input type="text" name="title" class="form-control" th:value="${book.title}" required>
-        </div>
+                <div class="mb-3">
+                    <label>서브 사진 삭제 (X 클릭)</label>
+                    <div>
+                        <div th:each="imgUrl : ${book.subImageUrls}" class="img-delete-box">
+                            <input type="checkbox" name="deleteImgs" th:value="${imgUrl}" th:id="|check_${imgUrl}|" style="display: none;">
+                            <label th:for="|check_${imgUrl}|" class="btn-delete" title="사진 삭제">X</label>
+                            <img th:src="${imgUrl}" class="edit-img-thumbnail">
+                        </div>
+                    </div>
+                </div>
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">본문 내용</label>
-            <textarea name="content" class="form-control" rows="10" th:text="${book.content}" required></textarea>
-        </div>
-
-        <div class="mb-3 border-top pt-3">
-            <label class="form-label fw-bold">메인 사진 수정 (교체하려면 파일 선택)</label>
-            <div>
-                <img th:src="${book.mainImageUrl}" class="edit-img-thumbnail mb-2">
+                <div class="mb-2">
+                    <label>새로운 사진 추가 (다중 선택 가능)</label>
+                    <input type="file" name="subImgs" class="jojo-input" style="font-size: 0.8rem;" accept="image/*" multiple>
+                </div>
+                
+                <div class="mt-3 p-2" style="background: rgba(197, 160, 89, 0.1); border-left: 3px solid var(--jojo-gold); font-size: 0.8rem; color: #555;">
+                    💡 X를 누르고 흑백이 되면 삭제 예약이다 이말이야!<br>
+                    날짜(<span th:text="${#temporals.format(book.createdAt, 'yyyy-MM-dd')}"></span>)는 그대로 유지된다고!
+                </div>
             </div>
-            <input type="file" name="mainImg" class="form-control" accept="image/*">
         </div>
 
-        <div class="mb-3 border-top pt-3">
-            <label class="form-label fw-bold mb-2">인상 깊은 사진들 관리</label>
-            <div>
-                <div th:each="imgUrl : ${book.subImageUrls}" class="img-delete-box">
-                    <img th:src="${imgUrl}" class="edit-img-thumbnail">
-                    <input type="checkbox" name="deleteImgs" th:value="${imgUrl}"
-                           th:id="|check_${imgUrl}|" style="display: none;">
-                    <label th:for="|check_${imgUrl}|" class="btn-delete" title="사진 삭제">X</label>
+        <div class="cover-wrapper">
+            <div class="cover-front">
+                <div style="border: 1px solid var(--jojo-gold); padding: 20px; text-align: center; width: 85%; height: 85%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <p style="letter-spacing: 4px; font-size: 0.7rem; opacity: 0.7; margin-bottom: 10px;">REWRITE THE DESTINY</p>
+                    <h1 style="font-size: clamp(1.8rem, 5vw, 3rem); text-shadow: 2px 2px 4px rgba(0,0,0,0.5); font-weight: bold;">EDIT RECORD</h1>
+                    <div style="height: 2px; background: var(--jojo-gold); width: 40px; margin: 15px auto;"></div>
                 </div>
             </div>
 
-            <label class="form-label fw-bold mt-2">새로운 사진 추가 (여러 장 가능)</label>
-            <input type="file" name="subImgs" class="form-control" accept="image/*" multiple>
-        </div>
+            <div class="page cover-back">
+                <h3 class="fw-bold border-bottom pb-2 mb-3" style="color: #443e33; font-style: italic; border-color: var(--jojo-gold) !important;">TEXT CHRONICLE</h3>
+                
+                <div class="mb-3">
+                    <label>책 제목</label>
+                    <input type="text" name="title" class="jojo-input" th:value="${book.title}" required>
+                </div>
 
-        <div class="alert alert-info">
-            💡 사진 위 'X'를 누르면 검게 변하고, 저장 시 삭제된다 이말이야! <br>
-            날짜(<span th:text="${#temporals.format(book.createdAt, 'yyyy-MM-dd')}"></span>)는 유지된다 이말이야 유남생?!?
-        </div>
+                <div class="mb-3 d-flex flex-column flex-grow-1">
+                    <label>본문 내용</label>
+                    <textarea name="content" class="jojo-input flex-grow-1" style="resize: none;" th:text="${book.content}" required></textarea>
+                </div>
 
-        <div class="d-flex justify-content-between mt-4 border-top pt-4">
-            <div>
-                <a th:href="@{/view/{id}(id=${book.id})}" class="btn btn-outline-secondary">취소</a>
-            </div>
-            <div>
-                <button type="button" class="btn btn-danger me-2" th:onclick="|deleteBoard(${book.id})|">게시글 삭제</button>
-                <button type="submit" class="btn btn-warning px-5 fw-bold">수정 완료</button>
+                <div class="mt-auto pt-3 border-top d-flex gap-2" style="border-color: rgba(197, 160, 89, 0.5) !important;">
+                    <a th:href="@{/view/{id}(id=${book.id})}" class="jojo-btn" style="flex: 1; background: transparent; color: var(--ink-black);">취소</a>
+                    <button type="button" class="jojo-btn jojo-btn-danger" style="flex: 1;" th:onclick="|deleteBoard(${book.id})|">삭제</button>
+                    <button type="submit" class="jojo-btn" style="flex: 2;">수정 완료</button>
+                </div>
             </div>
         </div>
-    </form>
-</div>
+    </div>
+</form>
 
 <form id="deleteForm" method="post" style="display:none;"></form>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     function deleteBoard(id) {
-        if (confirm("진짜로 이 기록을 쌈뽕하게 날려버릴 거냐?!? 복구 안 된다 이말이야!")) {
+        if (confirm("진짜로 이 기록을 날려버릴 거냐?!? 영원히 복구 안 된다 이말이야!")) {
             const form = document.getElementById('deleteForm');
             form.action = '/delete/' + id;
             form.submit();
         }
     }
+    
+    // 페이지 접속 시 찰@지게 열리는 마도서 애니메이션!
+    window.onload = () => { setTimeout(() => { document.getElementById('jojoBook').classList.add('opened'); }, 600); };
 </script>
-
 </body>
 </html>

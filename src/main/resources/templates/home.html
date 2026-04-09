@@ -2,258 +2,285 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>코노 디오의 감성 3D 독서기록소</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코노 디오의 쌈@뽕한 3D 독서기록소</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --book-crimson: #5d0e0e; /* 깊은 고전의 레드 */
-            --page-antique: #f4eee0; /* 세월이 묻어난 종이색 */
-            --jojo-gold: #c5a059; /* 은은한 앤티크 골드 */
+            --book-crimson: #5d0e0e;
+            --page-antique: #f4eee0;
+            --jojo-gold: #c5a059;
             --ink-black: #1a1a1b;
-            --shadow-deep: rgba(0, 0, 0, 0.6);
         }
 
         body {
-            /* 🧛 서재의 은은한 조명을 형상화한 그라데이션이다아앗!!! */
             background: radial-gradient(circle at center, #3d332d 0%, #0a0908 100%); 
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            overflow: auto; 
             perspective: 3000px; 
             margin: 0;
             font-family: 'Times New Roman', serif;
+            min-width: 320px; 
         }
 
-        /* 🧛 책의 크기를 압도적으로 키웠다아앗!!! (1200px!) */
         .book-container {
-            width: 1200px;
-            height: 800px;
+            width: 90vw;
+            max-width: 1200px;
+            min-height: 450px; 
+            min-width: 300px;
+            aspect-ratio: 1.4 / 1; 
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 2s cubic-bezier(0.645, 0.045, 0.355, 1);
-            transform: rotateY(-22deg) rotateX(7deg);
-            filter: drop-shadow(0 60px 120px rgba(0,0,0,0.9));
+            transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+            transform: translateX(-25%) rotateY(-20deg) rotateX(5deg); 
+            filter: drop-shadow(0 30px 60px rgba(0,0,0,0.8));
         }
 
         .book-container.opened {
-            transform: rotateY(0deg) rotateX(0deg);
+            transform: translateX(0) rotateY(0deg) rotateX(0deg);
         }
 
-        /* 페이지 공통: 양장본 특유의 질감 추가 */
         .page {
             position: absolute;
+            background: var(--page-antique);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
+            padding: 2.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .page-right { 
+            left: 50%; 
             width: 50%;
             height: 100%;
             top: 0;
-            background: var(--page-antique);
-            box-shadow: inset 0 0 60px rgba(0,0,0,0.1);
-            padding: 70px;
-            display: flex;
-            flex-direction: column;
+            border-radius: 0 15px 15px 0; 
+            z-index: 1; 
             border: 1px solid #dcd3bc;
+            border-left: 2px solid #ccc; 
         }
 
-        .page-left {
-            left: 0;
-            border-radius: 20px 0 0 20px;
-            border-right: 5px solid #222;
-            z-index: 2;
-        }
-
-        .page-right {
-            left: 50%;
-            border-radius: 0 20px 20px 0;
-            z-index: 1;
-        }
-
-        /* 🧛 책을 사랑하는 자를 홀리는 양장본 표지다아앗!!! */
-        .cover {
+        .cover-wrapper {
             position: absolute;
             width: 50%;
             height: 100%;
-            left: 0;
+            left: 50%;
+            top: 0;
+            transform-origin: left;
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+            z-index: 5;
+        }
+
+        .book-container.opened .cover-wrapper { 
+            transform: rotateY(-180deg); 
+        }
+
+        .cover-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
             background: linear-gradient(145deg, #7a1515, var(--book-crimson));
             color: var(--jojo-gold);
-            z-index: 5;
-            transform-origin: left;
-            transition: transform 2.2s cubic-bezier(0.645, 0.045, 0.355, 1);
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            border-radius: 20px 0 0 20px;
-            box-shadow: 20px 0 50px rgba(0,0,0,0.7);
+            border-radius: 0 15px 15px 0; 
             backface-visibility: hidden;
-            border: 12px double var(--jojo-gold); /* 고전적인 이중 테두리! */
-            box-sizing: border-box; /* 패딩 삐져나옴 방지! */
+            border: 10px double var(--jojo-gold);
+            box-sizing: border-box;
+            z-index: 2;
         }
 
-        .book-container.opened .cover {
-            transform: rotateY(-178deg);
+        .cover-back {
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotateY(180deg); 
+            backface-visibility: hidden;
+            border-radius: 15px 0 0 15px !important; 
+            border-left: 1px solid #dcd3bc !important; 
+            border-right: 5px solid #222 !important; 
+            z-index: 1;
         }
 
-        /* 감성적인 타이틀 장식 */
-        .page-header {
-            border-bottom: 1px solid var(--jojo-gold);
-            margin-bottom: 40px;
-            padding-bottom: 15px;
-            text-align: center;
-            font-style: italic;
-            color: #443e33;
-        }
-
-        .record-scroll {
-            overflow-y: auto;
-            flex-grow: 1;
-            padding-right: 25px;
-        }
-
+        .auth-btn-container { position: absolute; top: 20px; right: 20px; z-index: 100; display: flex; gap: 10px; }
+        .auth-btn { width: clamp(80px, 10vw, 120px); padding: 8px 0; font-weight: bold; font-size: 14px; text-align: center; border-radius: 5px; text-decoration: none; transition: 0.3s; }
+        .btn-login { border: 2px solid var(--jojo-gold); color: var(--jojo-gold); }
+        .btn-signup { background: var(--jojo-gold); color: #1a1a1b; border: none; }
+        .record-scroll { overflow-y: auto; flex-grow: 1; max-height: 100%; }
         .record-scroll::-webkit-scrollbar { width: 6px; }
         .record-scroll::-webkit-scrollbar-thumb { background: var(--jojo-gold); border-radius: 10px; }
+        .book-item-3d { border-bottom: 1px solid #e2dac2; padding: 15px 0; display: flex; align-items: center; transition: 0.3s; }
+        .book-item-3d:hover { transform: translateX(10px); background: rgba(197, 160, 89, 0.08); }
+        .book-item-3d h6, .book-item-3d h5 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .book-img-small { width: 60px; height: 85px; object-fit: cover; border-radius: 4px; box-shadow: 3px 3px 8px rgba(0,0,0,0.3); filter: sepia(20%); }
+        .jojo-btn { background: var(--book-crimson); color: var(--jojo-gold); font-weight: bold; border: 1px solid var(--jojo-gold); padding: 12px; width: 100%; text-align: center; text-decoration: none; display: block; text-transform: uppercase; transition: 0.4s; }
+        .jojo-btn:hover { background: #4a0a0a; color: #fff; box-shadow: 0 0 20px rgba(197, 160, 89, 0.4); }
 
-        /* 리스트 아이템: 더 감성적인 레이아웃 */
-        .book-item-3d {
-            border-bottom: 1px solid #e2dac2;
-            padding: 30px 0;
-            transition: all 0.5s;
-            display: flex;
-            align-items: center;
+        /* 🧛 [PC/모바일 공통] 드롭다운 파문 애니메이션이다아앗!!! */
+        .dropdown-menu {
+            display: block !important; 
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(15px) scale(0.95); 
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important; 
+            pointer-events: none; 
+            border: 1px solid var(--jojo-gold) !important;
+            background-color: var(--page-antique) !important;
+            z-index: 1000;
+            border-radius: 0 !important;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.2) !important;
         }
 
-        .book-item-3d:hover {
-            transform: translateX(15px);
-            background: rgba(197, 160, 89, 0.08);
+        .dropdown-menu.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0) scale(1); 
+            pointer-events: auto;
         }
 
-        .book-img-small {
-            width: 90px;
-            height: 130px;
-            object-fit: cover;
-            border-radius: 4px;
-            box-shadow: 8px 8px 20px rgba(0,0,0,0.4);
-            filter: sepia(20%); /* 감성적인 세피아톤 살짝! */
+        .dropdown-item {
+            transition: all 0.3s ease;
+            font-weight: 500;
+            padding: 10px 20px;
+            color: var(--ink-black);
         }
 
-        /* 버튼: 클래식한 실링 왁스 느낌 */
-        .jojo-btn {
-            background: var(--book-crimson);
-            color: var(--jojo-gold);
-            font-weight: bold;
-            border: 1px solid var(--jojo-gold);
-            padding: 18px;
-            font-size: 1.1rem;
-            letter-spacing: 3px;
-            transition: 0.6s;
-            text-transform: uppercase;
+        .dropdown-item:hover {
+            background-color: var(--jojo-gold) !important;
+            color: white !important;
+            transform: translateX(8px); 
         }
 
-        .jojo-btn:hover {
-            background: #4a0a0a;
-            box-shadow: 0 0 30px rgba(197, 160, 89, 0.4);
-            color: #fff;
-        }
-        
-        .auth-btn-container {
-            position: absolute;
-            top: 40px;
-            right: 50px;
-            z-index: 10;
-        }
+        h3 { font-size: clamp(1.2rem, 3vw, 2rem) !important; }
+        h6 { font-size: clamp(0.9rem, 1.5vw, 1.2rem) !important; }
 
-        .badge-jojo {
-            background-color: transparent;
-            color: var(--jojo-gold);
-            border: 1px solid var(--jojo-gold);
-            font-size: 10px;
-            padding: 3px 8px;
+        @media (max-width: 668px) {
+            .book-container {
+                width: 80vw;
+                height: 90vh; 
+                aspect-ratio: auto; 
+                transform: translateY(-25%) rotateX(15deg) !important; 
+            }
+            .book-container.opened {
+                transform: translateY(0) rotateX(0deg) !important; 
+            }
+            .page { padding: 1rem 1.5rem !important; }
+            .page-right { 
+                left: 0; top: 50%; width: 100%; height: 50%;
+                border-radius: 0 0 15px 15px !important; 
+                border-left: 1px solid #dcd3bc !important;
+                border-top: 2px solid #ccc !important; 
+            }
+            .cover-wrapper { 
+                left: 0; top: 50%; width: 100%; height: 50%; transform-origin: top; 
+            }
+            .book-container.opened .cover-wrapper { transform: rotateX(180deg) !important; }
+            .cover-front { border-radius: 0 0 15px 15px !important; }
+            .cover-back {
+                transform: rotateX(180deg) !important; 
+                border-radius: 15px 15px 0 0 !important; 
+                border-bottom: 3px solid #222 !important; 
+                border-top: 1px solid #dcd3bc !important; 
+                border-left: none !important; border-right: none !important;
+            }
+            .book-item-3d { padding: 8px 0 !important; }
+            .book-img-small { width: 35px !important; height: 50px !important; }
+            .auth-btn-container { top: 8px; right: 8px; gap: 4px; }
+            .auth-btn { width: 55px; font-size: 10px; padding: 4px 0; }
+            .jojo-btn { padding: 8px; font-size: 0.85rem; }
+            h1 { font-size: 1.8rem !important; }
+            h3 { font-size: 1.1rem !important; margin-bottom: 10px !important; padding-bottom: 5px !important; }
+            h6 { font-size: 0.85rem !important; }
+            .h5 { font-size: 1rem !important; margin-bottom: 5px !important; }
+            p { font-size: 0.75rem !important; margin-bottom: 5px !important; }
+            .dropdown-toggle { padding: 5px !important; font-size: 0.8rem !important; }
+            .empty-record { height: 100%; display: flex; align-items: center; justify-content: center; padding: 0 !important; }
         }
     </style>
 </head>
 <body>
 
 <div class="auth-btn-container">
-    <div sec:authorize="isAnonymous()">
-        <a href="/login" class="btn btn-outline-warning btn-lg px-4 fw-bold me-3" style="border-width: 2px; border-color: var(--jojo-gold); color: var(--jojo-gold); font-size: 1.1rem;">LOGIN</a>
-        <a href="/signup" class="btn btn-warning btn-lg px-4 fw-bold" style="background: var(--jojo-gold); border: none; font-size: 1.1rem; color: #1a1a1b;">SIGN UP</a>
+    <div sec:authorize="isAnonymous()" style="display: flex; gap: 10px;">
+        <a href="/login" class="auth-btn btn-login">LOGIN</a>
+        <a href="/signup" class="auth-btn btn-signup">SIGN UP</a>
     </div>
-    <div sec:authorize="isAuthenticated()">
-        <span class="text-white-50 me-4" style="font-size: 16px; font-style: italic;">
-            Greetings, <strong th:text="${#authentication.name}" class="text-warning">브로</strong>... 
-        </span>
-        <form th:action="@{/logout}" method="post" class="d-inline">
-            <button type="submit" class="btn btn-lg btn-outline-danger px-4 fw-bold" style="font-size: 1rem;">LOGOUT</button>
+    <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 10px;">
+        <span class="text-white-50 small" style="font-style: italic;">Greetings, <strong th:text="${#authentication.name}" class="text-warning">브로</strong>...</span>
+        <form th:action="@{/logout}" method="post" class="m-0">
+            <button type="submit" class="auth-btn btn-login" style="cursor: pointer; background: transparent;">LOGOUT</button>
         </form>
     </div>
 </div>
 
 <div class="book-container" id="jojoBook">
-    <div class="cover">
-        <div style="box-sizing: border-box; border: 1px solid var(--jojo-gold); padding: 40px 20px; text-align: center; width: 85%; height: 85%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <p style="letter-spacing: 5px; font-size: 0.75rem; opacity: 0.7; margin-bottom: 10px; width: 100%;">MEMORIES OF THE SOUL</p>
-            <h1 class="fw-bold my-3" style="font-size: 3.2rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); line-height: 1.2; word-break: keep-all;">BIBLIOTHÈQUE</h1>
-            <div style="height: 2px; background: var(--jojo-gold); width: 40px; margin: 15px auto;"></div>
-            <p class="small" style="font-style: italic; opacity: 0.8; word-break: keep-all;">"책 속에 새겨진 자네의 운명을 펼쳐라앗!!!"</p>
-        </div>
-    </div>
-
-    <div class="page page-left">
-        <div class="page-header">
-            <h3 class="fw-bold">INDEX</h3>
-        </div>
-        
-        <div sec:authorize="isAuthenticated()" class="mb-5 text-center">
-            <p class="h5 mb-3">Welcome, <span th:text="${#authentication.name}" class="text-danger">브로</span></p>
-            <p class="text-muted" style="font-size: 0.9rem;">"공포를 내 것으로 삼은 자여, <br>오늘도 호흡을 흐트러뜨리지 마라!"</p>
-        </div>
-
-        <div class="dropdown mb-5">
-            <p class="text-center text-muted small mb-3">— Sort By —</p>
-            <button class="btn btn-outline-dark dropdown-toggle w-100 py-3" type="button" data-bs-toggle="dropdown" style="border-radius: 0; border-color: #ccc;">
-                <span id="sortText" th:text="${currentSort == 'views' ? 'Most Viewed' : (currentSort == 'oldest' ? 'Oldest First' : 'Newest First')}">정렬</span>
-            </button>
-            <ul class="dropdown-menu w-100 shadow-lg border-0" style="border-radius: 0;">
-                <li><a class="dropdown-item py-3" href="javascript:void(0);" onclick="fetchSortedBooks('latest')">최신순 드가자!</a></li>
-                <li><a class="dropdown-item py-3" href="javascript:void(0);" onclick="fetchSortedBooks('oldest')">오래된순 쫀득!</a></li>
-                <li><a class="dropdown-item py-3" href="javascript:void(0);" onclick="fetchSortedBooks('views')">조회수순 찰지게!</a></li>
-            </ul>
-        </div>
-
-        <div class="mt-auto">
-            <div sec:authorize="isAnonymous()">
-                <a href="javascript:void(0);" 
-                   onclick="if(confirm('로그인이 필요한 작업입니다 \n로그인하러 가시겠습니까?')) location.href='/login';" 
-                   class="btn jojo-btn w-100 shadow-sm" style="border-radius: 0;">기록의 서 작성</a>
-            </div>
-            
-            <div sec:authorize="isAuthenticated()">
-                <a href="/write" 
-                   class="btn jojo-btn w-100 shadow-sm" style="border-radius: 0;">기록의 서 작성</a>
-            </div>
-    </div>
-
+    
     <div class="page page-right">
-        <div class="page-header">
-            <h3 class="fw-bold">CHRONICLES</h3>
-        </div>
-        
+        <h3 class="fw-bold border-bottom pb-2 mb-4" style="color: #443e33; font-style: italic; border-color: var(--jojo-gold) !important;">CHRONICLES</h3>
         <div id="recordsContainer" class="record-scroll">
-            <div th:if="${#lists.isEmpty(books)}" class="text-center py-5">
-                <p class="text-muted italic h5">"텅 빈 페이지는 아직 쓰이지 않은 운명이다... <br> 어서 기록하라아앗!!!"</p>
+            <div th:if="${#lists.isEmpty(books)}" class="empty-record text-center py-5">
+                <p class="text-muted italic h6 m-0" style="word-break: keep-all;">"텅 빈 페이지는 아직 쓰이지 않은 운명이다... <br> 어서 기록하라아앗!!!"</p>
             </div>
             <div th:each="book : ${books}" class="book-item-3d">
-                <a th:href="@{/view/{id}(id=${book.id})}" class="me-4">
+                <a th:href="@{/view/{id}(id=${book.id})}" class="me-3">
                     <img th:src="${book.mainImageUrl}" class="book-img-small" alt="img">
                 </a>
                 <div class="overflow-hidden flex-grow-1">
                     <a th:href="@{/view/{id}(id=${book.id})}" class="text-decoration-none text-dark">
-                        <h4 th:text="${book.title}" class="fw-bold mb-2 text-truncate" style="color: #2c2924;">제목</h4>
+                        <h6 th:text="${book.title}" class="fw-bold mb-1 text-truncate" style="color: #2c2924;">제목</h6>
                     </a>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <p class="text-muted small mb-0" th:text="${#temporals.format(book.createdAt, 'yyyy. MM. dd')}">날짜</p>
-                        <span class="badge-jojo" th:text="'VIEWS: ' + ${book.viewCount}">0</span>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="small text-muted" th:text="${#temporals.format(book.createdAt, 'MM.dd')}">날짜</span>
+                        <span style="font-size: 10px; border: 1px solid var(--jojo-gold); padding: 2px 6px; color: var(--jojo-gold); border-radius: 3px;" th:text="'views: ' + ${book.viewCount}">0</span>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cover-wrapper">
+        <div class="cover-front">
+            <div style="border: 1px solid var(--jojo-gold); padding: 20px; text-align: center; width: 85%; height: 85%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <p style="letter-spacing: 4px; font-size: 0.7rem; opacity: 0.7; margin-bottom: 10px;">MEMORIES OF THE SOUL</p>
+                <h1 style="font-size: clamp(1.8rem, 5vw, 3.5rem); text-shadow: 2px 2px 4px rgba(0,0,0,0.5); font-weight: bold;">BIBLIOTHÈQUE</h1>
+                <div style="height: 2px; background: var(--jojo-gold); width: 40px; margin: 15px auto;"></div>
+                <p style="font-size: 0.8rem; font-style: italic; opacity: 0.8;">"자네의 운명을 펼쳐라앗!!!"</p>
+            </div>
+        </div>
+
+        <div class="page cover-back">
+            <h3 class="fw-bold border-bottom pb-2 mb-4" style="color: #443e33; font-style: italic; border-color: var(--jojo-gold) !important;">INDEX</h3>
+            
+            <div sec:authorize="isAuthenticated()" class="mb-4 text-center">
+                <p class="h5 mb-2">Welcome, <span th:text="${#authentication.name}" class="text-danger">건</span></p>
+                <p class="text-muted" style="font-size: 0.85rem;">"공포를 내 것으로 삼은 자여, <br>오늘도 호흡을 흐트러뜨리지 마라!"</p>
+            </div>
+
+            <div class="dropdown mb-4">
+                <p class="text-center text-muted small mb-2">— Sort By —</p>
+                <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" style="border-radius: 0;">
+                    <span id="sortText" th:text="${currentSort == 'views' ? 'Most Viewed' : (currentSort == 'oldest' ? 'Oldest First' : 'Newest First')}">정렬</span>
+                </button>
+                <ul class="dropdown-menu w-100 shadow-lg border-0">
+                    <li><a class="dropdown-item py-2" href="javascript:void(0);" onclick="fetchSortedBooks('latest')">최신순</a></li>
+                    <li><a class="dropdown-item py-2" href="javascript:void(0);" onclick="fetchSortedBooks('oldest')">오래된순</a></li>
+                    <li><a class="dropdown-item py-2" href="javascript:void(0);" onclick="fetchSortedBooks('views')">조회수순</a></li>
+                </ul>
+            </div>
+            
+            <div class="mt-auto">
+                <div sec:authorize="isAnonymous()">
+                    <a href="javascript:void(0);" onclick="if(confirm('로그인부터 해라 브로!')) location.href='/login';" class="jojo-btn">기록의 서 작성</a>
+                </div>
+                <div sec:authorize="isAuthenticated()">
+                    <a href="/write" class="jojo-btn">기록의 서 작성</a>
                 </div>
             </div>
         </div>
@@ -263,23 +290,14 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function fetchSortedBooks(sortType) {
-        fetch('/?sort=' + sortType)
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                document.getElementById('recordsContainer').innerHTML = doc.getElementById('recordsContainer').innerHTML;
-                document.getElementById('sortText').innerText = doc.getElementById('sortText').innerText;
-                history.pushState(null, '', '/?sort=' + sortType);
-            })
-            .catch(err => console.error("오류가 등 뒤에서 다가온다!:", err));
+        fetch('/?sort=' + sortType).then(r => r.text()).then(html => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            document.getElementById('recordsContainer').innerHTML = doc.getElementById('recordsContainer').innerHTML;
+            document.getElementById('sortText').innerText = doc.getElementById('sortText').innerText;
+            history.pushState(null, '', '/?sort=' + sortType);
+        });
     }
-
-    window.onload = () => {
-        setTimeout(() => {
-            document.getElementById('jojoBook').classList.add('opened');
-        }, 800);
-    };
+    window.onload = () => { setTimeout(() => { document.getElementById('jojoBook').classList.add('opened'); }, 800); };
 </script>
 </body>
 </html>
